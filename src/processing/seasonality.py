@@ -50,14 +50,21 @@ class SeasonalityProcessor:
         series = pd.to_numeric(series, errors="coerce")
         
         # Handle missing values
-        series = series.fillna(method="ffill").fillna(method="bfill")
+        series = series.ffill().bfill()
         
         # Perform STL decomposition
+        # Ensure seasonal window is odd
+        seasonal_window = self.seasonal_window
+        if seasonal_window is None:
+            seasonal_window = 7  # Default odd window
+        elif seasonal_window % 2 == 0:
+            seasonal_window += 1
+            
         stl = STL(
             series,
             period=self.seasonal_period,
             trend=self.trend_window,
-            seasonal=self.seasonal_window,
+            seasonal=seasonal_window,
             robust=self.robust,
         )
         result = stl.fit()
@@ -92,7 +99,7 @@ class SeasonalityProcessor:
                 min_periods=self.seasonal_period,
                 center=True,
             ).mean()
-            baseline = baseline.fillna(method="ffill").fillna(method="bfill")
+            baseline = baseline.ffill().bfill()
         
         return baseline
     
@@ -129,7 +136,7 @@ class SeasonalityProcessor:
         ).std()
         
         # Fill missing values
-        rolling_std = rolling_std.fillna(method="ffill").fillna(method="bfill")
+        rolling_std = rolling_std.ffill().bfill()
         
         # Apply minimum std threshold
         rolling_std = rolling_std.clip(lower=min_std)

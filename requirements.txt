@@ -26,8 +26,8 @@ requests-cache==1.1.1
 
 # Time series
 statsmodels==0.14.1
-ruptures==1.1.8
 scipy==1.11.4
+# ruptures==1.1.8  # Optional: change-point detection (build issues on some systems)
 
 # API/Web
 fastapi==0.108.0
@@ -47,4 +47,4 @@ pytest-cov==4.1.0
 black==23.12.1
 ruff==0.1.9
 mypy==1.8.0
-ipython==8.19.0
+ipython==8.18.1

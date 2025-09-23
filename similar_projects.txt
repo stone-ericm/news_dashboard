@@ -1,0 +1,48 @@
+Similar or related open-source projects and resources
+
+- Media Cloud (media/attention analysis platform)
+  Org: https://github.com/mediacloud
+  Notes: Research platform for analyzing online news media attention and framing; data pipelines and analysis tools.
+
+- Wikimedia Pageviews Analysis (attention proxy)
+  Repo: https://github.com/MusikAnimal/pageviews
+  Notes: Community tool powering Wikipedia pageviews analytics; useful patterns for pageview aggregation/dashboards.
+
+- Our World in Data – Grapher (data serving & charts)
+  Repo: https://github.com/owid/owid-grapher
+  Notes: Open-source data pipeline + interactive charting system at scale; strong reference for serving time-series with transparency.
+
+- OpenAQ (air-quality aggregation)
+  Org: https://github.com/openaq
+  Notes: Global air-quality data aggregation APIs/dashboards; reference for multi-source ingestion and QA.
+
+- rOpenGov eurostat (Eurostat SDMX access)
+  Repo: https://github.com/rOpenGov/eurostat
+  Notes: R package for Eurostat SDMX; helpful for understanding dimensions/metadata and dataset navigation.
+
+- Eurostat dashboards (examples)
+  Topic: https://github.com/topics/eurostat
+  Notes: Community dashboards using Eurostat/SDMX; patterns for geographic breakdowns and indicator selection.
+
+- GDELT-based dashboards (news event metadata)
+  Search: https://github.com/search?q=gdelt+dashboard&type=repositories
+  Notes: Examples that visualize GDELT streams; relevant for media coverage proxies and event co-occurrence.
+
+- OpenSky Network (aviation telemetry)
+  Repo: https://github.com/openskynetwork/opensky-api
+  Notes: Live ADS-B aggregation; reference for streaming ingestion and rate-limited APIs.
+
+- ENTSO-E Transparency client (EU electricity)
+  Repo: https://github.com/EnergieID/entsoe-py
+  Notes: Python client for EU grid data; shows auth, paging, and parameterization patterns.
+
+- NASA FIRMS (fire detections) dashboards
+  Search: https://github.com/search?q=NASA+FIRMS+dashboard&type=repositories
+  Notes: Pipelines/dashboards for near-real-time environmental signals.
+
+- Wikipedia/Wikimedia pageview dashboards (multi-language)
+  Topic: https://github.com/topics/wikipedia-pageviews
+  Notes: Language/project breakdowns and rate-limit handling examples.
+
+Caveat
+- Many "news dashboard" repos focus on RSS/headlines rather than statistically grounded movement. The above emphasize attention proxies, official stats access (SDMX/Eurostat/World Bank), and large-scale time-series visualization.

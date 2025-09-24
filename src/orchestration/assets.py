@@ -16,6 +16,9 @@ from dagster import (
 
 from src.ingestion.google_trends import GoogleTrendsConnector
 from src.ingestion.wikipedia import WikipediaPageviewsConnector
+from src.ingestion.faostat import FAOSTATConnector
+from src.ingestion.usda_nass import USDANASSConnector
+from src.ingestion.opensky import OpenSkyConnector
 from src.models.source_registry import PREDEFINED_SOURCES, SourceRegistry
 from src.models.taxonomy import TaxonomyManager, get_default_taxonomy
 
@@ -224,6 +227,167 @@ def wikipedia_pageviews_raw(context: AssetExecutionContext) -> Output[pd.DataFra
         metadata={
             "rows": len(result_df),
             "topics": len(result_df["topic_id"].unique()) if not result_df.empty else 0,
+            "file_path": str(file_path),
+        },
+    )
+
+
+@asset(
+    description="FAOSTAT agricultural data for configured topics",
+    compute_kind="python",
+    deps=[source_registry, topic_taxonomy],
+)
+def faostat_raw(context: AssetExecutionContext) -> Output[pd.DataFrame]:
+    """Fetch FAOSTAT agricultural data."""
+    # Load dependencies
+    registry = SourceRegistry()
+    taxonomy = TaxonomyManager()
+    taxonomy.load()
+    
+    # Get agriculture topics
+    agriculture_topics = [
+        topic for topic in taxonomy.topics.values()
+        if topic.parent_id == "agriculture" or topic.topic_id == "agriculture"
+    ]
+    
+    context.log.info(f"Fetching FAOSTAT data for {len(agriculture_topics)} agriculture topics")
+    
+    # Initialize connector
+    connector = FAOSTATConnector()
+    
+    # Fetch crop production data (major crops and countries)
+    all_data = []
+    try:
+        # Fetch crop production data
+        production_data = connector.fetch_crop_production()
+        if production_data is not None and not production_data.empty:
+            production_data["data_type"] = "production"
+            all_data.append(production_data)
+            context.log.info(f"Fetched {len(production_data)} production records")
+        
+        # Fetch crop yield data
+        yield_data = connector.fetch_crop_yields()
+        if yield_data is not None and not yield_data.empty:
+            yield_data["data_type"] = "yield"
+            all_data.append(yield_data)
+            context.log.info(f"Fetched {len(yield_data)} yield records")
+            
+    except Exception as e:
+        context.log.warning(f"Failed to fetch FAOSTAT data: {e}")
+    
+    # Combine results
+    if all_data:
+        result_df = pd.concat(all_data, ignore_index=True)
+    else:
+        result_df = pd.DataFrame()
+    
+    # Save to bronze
+    bronze_path = Path("data/bronze/faostat")
+    bronze_path.mkdir(parents=True, exist_ok=True)
+    
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    file_path = bronze_path / f"faostat_{timestamp}.parquet"
+    
+    if not result_df.empty:
+        result_df.to_parquet(file_path)
+    
+    # Update source health
+    source = registry.get_source("faostat")
+    if source:
+        from src.models.source_registry import HealthStatus
+        
+        registry.update_health(
+            "faostat",
+            HealthStatus.HEALTHY if not result_df.empty else HealthStatus.DEGRADED,
+            is_success=not result_df.empty,
+        )
+    
+    return Output(
+        value=result_df,
+        metadata={
+            "rows": len(result_df),
+            "data_types": result_df["data_type"].unique().tolist() if not result_df.empty else [],
+            "file_path": str(file_path),
+        },
+    )
+
+
+@asset(
+    description="OpenSky aviation data for transportation analysis",
+    compute_kind="python",
+    deps=[source_registry, topic_taxonomy],
+)
+def opensky_raw(context: AssetExecutionContext) -> Output[pd.DataFrame]:
+    """Fetch OpenSky aviation data."""
+    # Load dependencies
+    registry = SourceRegistry()
+    taxonomy = TaxonomyManager()
+    taxonomy.load()
+    
+    # Get transportation topics
+    transportation_topics = [
+        topic for topic in taxonomy.topics.values()
+        if topic.parent_id == "transportation" or topic.topic_id == "transportation"
+    ]
+    
+    context.log.info(f"Fetching OpenSky data for {len(transportation_topics)} transportation topics")
+    
+    # Initialize connector
+    connector = OpenSkyConnector()
+    
+    # Fetch current aircraft states for major regions
+    all_data = []
+    
+    # Define major regions (bounding boxes)
+    regions = {
+        "north_america": (25.0, 50.0, -130.0, -60.0),  # min_lat, max_lat, min_lon, max_lon
+        "europe": (35.0, 70.0, -10.0, 40.0),
+        "asia_pacific": (10.0, 50.0, 100.0, 150.0),
+    }
+    
+    for region_name, bbox in regions.items():
+        try:
+            states_data = connector.fetch_states(bbox=bbox)
+            if states_data is not None and not states_data.empty:
+                states_data["region"] = region_name
+                all_data.append(states_data)
+                context.log.info(f"Fetched {len(states_data)} aircraft states for {region_name}")
+        except Exception as e:
+            context.log.warning(f"Failed to fetch OpenSky data for {region_name}: {e}")
+    
+    # Combine results
+    if all_data:
+        result_df = pd.concat(all_data, ignore_index=True)
+    else:
+        result_df = pd.DataFrame()
+    
+    # Save to bronze
+    bronze_path = Path("data/bronze/opensky")
+    bronze_path.mkdir(parents=True, exist_ok=True)
+    
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    file_path = bronze_path / f"opensky_{timestamp}.parquet"
+    
+    if not result_df.empty:
+        result_df.to_parquet(file_path)
+    
+    # Update source health
+    source = registry.get_source("opensky_network")
+    if source:
+        from src.models.source_registry import HealthStatus
+        
+        registry.update_health(
+            "opensky_network",
+            HealthStatus.HEALTHY if not result_df.empty else HealthStatus.DEGRADED,
+            is_success=not result_df.empty,
+        )
+    
+    return Output(
+        value=result_df,
+        metadata={
+            "rows": len(result_df),
+            "regions": result_df["region"].unique().tolist() if not result_df.empty else [],
+            "countries": result_df["origin_country"].nunique() if not result_df.empty else 0,
             "file_path": str(file_path),
         },
     )

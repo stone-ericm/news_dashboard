@@ -15,7 +15,14 @@ all_assets = load_assets_from_modules([assets])
 # Define jobs
 daily_ingestion_job = define_asset_job(
     name="daily_ingestion",
-    selection=["source_registry", "topic_taxonomy", "google_trends_raw", "wikipedia_pageviews_raw"],
+    selection=[
+        "source_registry", 
+        "topic_taxonomy", 
+        "google_trends_raw", 
+        "wikipedia_pageviews_raw",
+        "faostat_raw",
+        "opensky_raw"
+    ],
     description="Daily data ingestion from all sources",
 )
 

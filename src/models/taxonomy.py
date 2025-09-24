@@ -156,6 +156,26 @@ def get_default_taxonomy() -> TaxonomyManager:
     )
     taxonomy.add_topic(climate)
     
+    agriculture = Topic(
+        topic_id="agriculture",
+        name="Agriculture & Food",
+        description="Agricultural production, food security, and farming",
+        keywords=["agriculture", "farming", "crops", "food", "harvest"],
+        color="#8BC34A",
+        priority=50,
+    )
+    taxonomy.add_topic(agriculture)
+    
+    transportation = Topic(
+        topic_id="transportation",
+        name="Transportation & Logistics",
+        description="Transportation systems, logistics, and mobility",
+        keywords=["transportation", "logistics", "shipping", "aviation", "freight"],
+        color="#FF9800",
+        priority=60,
+    )
+    taxonomy.add_topic(transportation)
+    
     # Economy subcategories
     taxonomy.add_topic(
         Topic(
@@ -301,6 +321,104 @@ def get_default_taxonomy() -> TaxonomyManager:
             keywords=["air quality", "pollution", "smog", "pm2.5", "aqi"],
             google_trends_queries=["air quality", "air pollution", "aqi"],
             wikipedia_articles=["Air_pollution", "Air_quality_index"],
+        )
+    )
+    
+    # Agriculture subcategories
+    taxonomy.add_topic(
+        Topic(
+            topic_id="agriculture_crops",
+            name="Crop Production",
+            description="Crop yields, harvests, and agricultural production",
+            parent_id="agriculture",
+            keywords=["crops", "harvest", "yield", "corn", "wheat", "soybeans", "rice"],
+            google_trends_queries=["crop yield", "harvest season", "corn production"],
+            wikipedia_articles=["Crop_yield", "Harvest", "Agriculture"],
+        )
+    )
+    
+    taxonomy.add_topic(
+        Topic(
+            topic_id="agriculture_livestock",
+            name="Livestock & Dairy",
+            description="Livestock production, dairy, and animal agriculture",
+            parent_id="agriculture",
+            keywords=["livestock", "cattle", "dairy", "beef", "pork", "poultry"],
+            google_trends_queries=["livestock prices", "cattle market", "dairy production"],
+            wikipedia_articles=["Livestock", "Dairy_farming", "Animal_husbandry"],
+        )
+    )
+    
+    taxonomy.add_topic(
+        Topic(
+            topic_id="agriculture_food_security",
+            name="Food Security",
+            description="Food availability, access, and global food security",
+            parent_id="agriculture",
+            keywords=["food security", "hunger", "malnutrition", "food crisis", "famine"],
+            google_trends_queries=["food crisis", "food shortage", "global hunger"],
+            wikipedia_articles=["Food_security", "Hunger", "Malnutrition"],
+        )
+    )
+    
+    taxonomy.add_topic(
+        Topic(
+            topic_id="agriculture_prices",
+            name="Agricultural Prices",
+            description="Commodity prices and agricultural market trends",
+            parent_id="agriculture",
+            keywords=["commodity prices", "food prices", "agricultural markets"],
+            google_trends_queries=["food prices", "commodity market", "agricultural prices"],
+            wikipedia_articles=["Commodity_market", "Food_price_crisis"],
+        )
+    )
+    
+    # Transportation subcategories
+    taxonomy.add_topic(
+        Topic(
+            topic_id="transportation_aviation",
+            name="Aviation",
+            description="Air travel, flight patterns, and aviation industry",
+            parent_id="transportation",
+            keywords=["aviation", "flights", "airlines", "airports", "air travel"],
+            google_trends_queries=["flight delays", "airline industry", "air travel"],
+            wikipedia_articles=["Aviation", "Airline", "Airport"],
+        )
+    )
+    
+    taxonomy.add_topic(
+        Topic(
+            topic_id="transportation_freight",
+            name="Freight & Shipping",
+            description="Cargo transportation, shipping, and logistics",
+            parent_id="transportation",
+            keywords=["freight", "shipping", "cargo", "logistics", "supply chain"],
+            google_trends_queries=["shipping delays", "freight rates", "supply chain"],
+            wikipedia_articles=["Freight_transport", "Shipping", "Logistics"],
+        )
+    )
+    
+    taxonomy.add_topic(
+        Topic(
+            topic_id="transportation_maritime",
+            name="Maritime Transport",
+            description="Ocean shipping, ports, and maritime trade",
+            parent_id="transportation",
+            keywords=["maritime", "shipping", "ports", "vessels", "ocean freight"],
+            google_trends_queries=["shipping container", "port congestion", "maritime trade"],
+            wikipedia_articles=["Maritime_transport", "Port", "Container_ship"],
+        )
+    )
+    
+    taxonomy.add_topic(
+        Topic(
+            topic_id="transportation_rail_truck",
+            name="Rail & Trucking",
+            description="Rail transport, trucking, and ground freight",
+            parent_id="transportation",
+            keywords=["rail", "trucking", "freight train", "truck transport"],
+            google_trends_queries=["rail freight", "trucking industry", "freight train"],
+            wikipedia_articles=["Rail_freight_transport", "Truck", "Freight_train"],
         )
     )
     

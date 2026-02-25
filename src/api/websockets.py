@@ -44,9 +44,7 @@ class ConnectionManager:
         self.running = False
     
     async def connect(self, websocket: WebSocket, connection_type: str = 'dashboard'):
-        """Accept a new WebSocket connection."""
-        await websocket.accept()
-        
+        """Register a WebSocket connection (must already be accepted)."""
         if connection_type not in self.connections:
             self.connections[connection_type] = set()
         

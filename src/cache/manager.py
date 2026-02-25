@@ -42,6 +42,8 @@ class LocalCacheManager:
         
         # In-memory index of cache entries
         self.index: Dict[str, CacheEntry] = {}
+        # Reverse mapping: namespace -> set of cache keys for that namespace
+        self.namespace_index: Dict[str, set] = {}
         self.lock = threading.RLock()
         
         # Load existing cache index
@@ -77,21 +79,35 @@ class LocalCacheManager:
         if index_file.exists():
             try:
                 with open(index_file, 'r') as f:
-                    index_data = json.load(f)
-                
+                    raw_data = json.load(f)
+
+                # Support both old format (flat dict) and new format (with namespace_index)
+                if 'entries' in raw_data and 'namespace_index' in raw_data:
+                    index_data = raw_data['entries']
+                    ns_index_data = raw_data['namespace_index']
+                else:
+                    index_data = raw_data
+                    ns_index_data = {}
+
                 for key, entry_data in index_data.items():
                     # Convert datetime strings back to datetime objects
                     entry_data['created_at'] = datetime.fromisoformat(entry_data['created_at'])
                     entry_data['last_accessed'] = datetime.fromisoformat(entry_data['last_accessed'])
                     if entry_data['expires_at']:
                         entry_data['expires_at'] = datetime.fromisoformat(entry_data['expires_at'])
-                    
+
                     self.index[key] = CacheEntry(**entry_data)
-                
+
+                # Restore namespace index
+                self.namespace_index = {
+                    ns: set(keys) for ns, keys in ns_index_data.items()
+                }
+
                 print(f"Loaded cache index with {len(self.index)} entries")
             except Exception as e:
                 print(f"Error loading cache index: {e}")
                 self.index = {}
+                self.namespace_index = {}
     
     def _save_index(self):
         """Save cache index to disk."""
@@ -109,8 +125,16 @@ class LocalCacheManager:
                     entry_dict['expires_at'] = None
                 serializable_index[key] = entry_dict
             
+            # Convert namespace_index sets to lists for JSON serialization
+            serializable_ns_index = {
+                ns: list(keys) for ns, keys in self.namespace_index.items()
+            }
+
             with open(index_file, 'w') as f:
-                json.dump(serializable_index, f, indent=2)
+                json.dump({
+                    'entries': serializable_index,
+                    'namespace_index': serializable_ns_index
+                }, f, indent=2)
         except Exception as e:
             print(f"Error saving cache index: {e}")
     
@@ -172,11 +196,17 @@ class LocalCacheManager:
             )
             
             self.index[key] = entry
+
+            # Register key in namespace index for invalidation lookups
+            if namespace not in self.namespace_index:
+                self.namespace_index[namespace] = set()
+            self.namespace_index[namespace].add(key)
+
             self._save_index()
-            
+
             # Check if we need to cleanup
             self._cleanup_if_needed()
-            
+
             return key
     
     def get(self, namespace: str, identifier: str, **kwargs) -> Optional[Any]:
@@ -269,15 +299,19 @@ class LocalCacheManager:
                 if key in self.index:
                     keys_to_remove.append(key)
             else:
-                # Invalidate by namespace or tags
-                for key, entry in self.index.items():
-                    if key.startswith(namespace):
-                        if tags:
-                            # Check if entry has any of the specified tags
-                            if any(tag in entry.tags for tag in tags):
-                                keys_to_remove.append(key)
-                        else:
+                # Invalidate by namespace using the namespace index
+                # (keys are MD5 hashes so key.startswith(namespace) never works)
+                candidate_keys = self.namespace_index.get(namespace, set())
+                for key in candidate_keys:
+                    if key not in self.index:
+                        continue
+                    entry = self.index[key]
+                    if tags:
+                        # Check if entry has any of the specified tags
+                        if any(tag in entry.tags for tag in tags):
                             keys_to_remove.append(key)
+                    else:
+                        keys_to_remove.append(key)
             
             for key in keys_to_remove:
                 self._remove_entry(key)
@@ -289,14 +323,18 @@ class LocalCacheManager:
         if key in self.index:
             entry = self.index[key]
             file_path = Path(entry.file_path)
-            
+
             # Remove file
             if file_path.exists():
                 try:
                     file_path.unlink()
                 except Exception as e:
                     print(f"Error removing cache file {file_path}: {e}")
-            
+
+            # Remove from namespace index
+            for ns_keys in self.namespace_index.values():
+                ns_keys.discard(key)
+
             # Remove from index
             del self.index[key]
     
@@ -388,6 +426,7 @@ class LocalCacheManager:
             keys_to_remove = list(self.index.keys())
             for key in keys_to_remove:
                 self._remove_entry(key)
+            self.namespace_index.clear()
             self._save_index()
             print(f"Cleared {len(keys_to_remove)} cache entries")
 

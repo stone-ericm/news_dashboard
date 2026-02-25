@@ -204,7 +204,7 @@ class SeasonalityProcessor:
             try:
                 slope, _ = np.polyfit(t, x, 1)
                 return slope
-            except:
+            except Exception:
                 return np.nan
         
         slopes = series.rolling(

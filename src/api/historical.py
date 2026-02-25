@@ -117,7 +117,7 @@ async def get_historical_data(
             'topic_name': topic.name,
             'start_date': start_date,
             'end_date': end_date,
-            'data_points': [dp.dict() for dp in data_points],
+            'data_points': [dp.model_dump() for dp in data_points],
             'summary': summary,
             'generated_at': datetime.utcnow().isoformat()
         }
@@ -457,7 +457,7 @@ async def _preload_topics(topics: List, days_back: int):
                     'topic_name': topic.name,
                     'start_date': start_date.strftime('%Y-%m-%d'),
                     'end_date': end_date.strftime('%Y-%m-%d'),
-                    'data_points': [dp.dict() for dp in data_points],
+                    'data_points': [dp.model_dump() for dp in data_points],
                     'summary': {'preloaded': True},
                     'generated_at': datetime.utcnow().isoformat()
                 }

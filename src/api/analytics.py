@@ -129,7 +129,7 @@ async def get_trend_analysis(
                 last_updated=datetime.utcnow()
             )
             
-            analyses.append(analysis.dict())
+            analyses.append(analysis.model_dump())
         
         return {
             "analyses": analyses,
@@ -191,7 +191,7 @@ async def get_active_alerts(
                     if topic_id and alert.topic_id != topic_id:
                         continue
                     
-                    alerts.append(alert.dict())
+                    alerts.append(alert.model_dump())
         
         # Sort by severity and timestamp
         severity_order = {"critical": 4, "high": 3, "medium": 2, "low": 1}
